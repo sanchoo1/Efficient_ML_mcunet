@@ -37,4 +37,4 @@ with torch.no_grad():
         correct += (predicted == labels).sum().item()
 
 accuracy = 100 * correct / total
-print(f"CIFAR-10 accuracy of {net_id}: {accuracy:.2f}% (Image resized to {image_size}×{image_size})")
+print(f"CIFAR-10 accuracy of {net_id}: {accuracy:.2f}% (Image resized to {image_size}x{image_size})")
