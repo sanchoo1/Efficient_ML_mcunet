@@ -28,8 +28,7 @@ parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
 args = parser.parse_args()
 
 torch.backends.cudnn.benchmark = True
-device = 'cuda'
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def build_val_data_loader(resolution):
     normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
