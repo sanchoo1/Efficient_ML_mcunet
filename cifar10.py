@@ -1,40 +1,61 @@
-# eval_mcunet_cifar10.py
+# benchmark_mcunet_cifar10.py
 
 import torch
 import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 from mcunet.model_zoo import build_model
+from torch.utils.data import DataLoader
+import time
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Pick a model (you can change this)
-net_id = "mcunet-in2"
-model, image_size, desc = build_model(net_id=net_id, pretrained=True)
-model = model.to(device)
-model.eval()
+net_ids = ["mcunet-in0", "mcunet-in1", "mcunet-in2", "mcunet-in3", "mcunet-in4"]
 
-# Adjust CIFAR-10 input to match expected model input size
+# Data
 transform = transforms.Compose([
-    transforms.Resize((image_size, image_size)),
+    transforms.Resize((96, 96)),
     transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    transforms.Normalize((0.5,), (0.5,))
 ])
+trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+testset  = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
-# Load CIFAR-10 test set
-testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
-testloader = torch.utils.data.DataLoader(testset, batch_size=64, shuffle=False)
+trainloader = DataLoader(trainset, batch_size=64, shuffle=True, num_workers=2)
+testloader  = DataLoader(testset,  batch_size=64, shuffle=False, num_workers=2)
 
-# Evaluate model on CIFAR-10
-correct = 0
-total = 0
-with torch.no_grad():
-    for images, labels in testloader:
-        images, labels = images.to(device), labels.to(device)
-        outputs = model(images)
-        predicted = outputs.argmax(dim=1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
+print(f"{'Model':<12}{'Acc (%)':>10}{'Time(s)':>10}")
+print("-" * 32)
 
-accuracy = 100 * correct / total
-print(f"CIFAR-10 accuracy of {net_id}: {accuracy:.2f}% (Image resized to {image_size}x{image_size})")
+for net_id in net_ids:
+    model, image_size, desc = build_model(net_id=net_id, pretrained=True)
+    model.classifier = nn.Linear(model.classifier.in_features, 10)
+    model = model.to(device)
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+    start = time.time()
+    model.train()
+    for i, (x, y) in enumerate(trainloader):
+        x, y = x.to(device), y.to(device)
+        optimizer.zero_grad()
+        out = model(x)
+        loss = criterion(out, y)
+        loss.backward()
+        optimizer.step()
+        if i >= 100:  # 只跑前100个 batch，快速评估
+            break
+    model.eval()
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for x, y in testloader:
+            x, y = x.to(device), y.to(device)
+            out = model(x)
+            pred = out.argmax(dim=1)
+            correct += (pred == y).sum().item()
+            total += y.size(0)
+    end = time.time()
+    acc = 100 * correct / total
+    print(f"{net_id:<12}{acc:>10.2f}{end - start:>10.2f}")
