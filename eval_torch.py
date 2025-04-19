@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import torch.utils.data.distributed
 from torchvision import datasets, transforms
 
-from mcunet.utils import build_model
+from mcunet.model_zoo import build_model
 from mcunet.utils import AverageMeter, accuracy, count_net_flops, count_parameters
 
 # Training settings
