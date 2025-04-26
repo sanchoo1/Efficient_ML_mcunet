@@ -139,7 +139,7 @@ def main():
     parser.add_argument("--weight_decay", type=float, default=1e-4)
     parser.add_argument("--num_workers", type=int, default=4)
     parser.add_argument("--log_root", type=str, default="logs", help="Root directory for logs/checkpoints")
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()  # ignore unknown args from Jupyter
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ngpu = torch.cuda.device_count()
