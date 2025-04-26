@@ -44,27 +44,8 @@ class CIFAR100Wrapper:
 
 class TinyImageNetWrapper:
     def __init__(self, resolution, data_dir="data/tiny-imagenet", batch_size=128, num_workers=4):
-        # 准备数据目录
-        parent = os.path.dirname(data_dir)
-        if not os.path.isdir(data_dir):
-            print(f"[Info] Downloading and extracting Tiny ImageNet to {data_dir}")
-            os.makedirs(parent, exist_ok=True)
-            zip_path = os.path.join(parent, "tiny-imagenet-200.zip")
-            os.system(f"wget -q http://cs231n.stanford.edu/tiny-imagenet-200.zip -O {zip_path}")
-            os.system(f"unzip -q {zip_path} -d {parent}")
-            os.system(f"mv {os.path.join(parent, 'tiny-imagenet-200')} {data_dir}")
-        # 重组验证集目录
-        val_dir = os.path.join(data_dir, "val")
-        images_dir = os.path.join(val_dir, "images")
-        if os.path.isdir(val_dir) and not os.listdir(images_dir if os.path.isdir(images_dir) else ""):
-            print(f"[Info] Restructuring validation images in {val_dir}")
-            ann = os.path.join(val_dir, "val_annotations.txt")
-            # 创建 images 子目录
-            os.makedirs(images_dir, exist_ok=True)
-            # 根据注释文件移动图片
-            os.system(f"cd {val_dir} && awk '{{print $2}}' val_annotations.txt | sort -u | xargs -I{{}} mkdir -p images/{{}}")
-            os.system(f"cd {val_dir} && awk '{{print $1 \"	\" $2}}' val_annotations.txt | while IFS=\"	\" read img cls; do mv images/$img images/$cls/; done")
-        # 数据增强与预处理
+        self.prepare_dataset(data_dir)
+
         tf_train = transforms.Compose([
             transforms.Resize((resolution, resolution)),
             transforms.RandomCrop(resolution, padding=4),
@@ -77,12 +58,34 @@ class TinyImageNetWrapper:
             transforms.ToTensor(),
             transforms.Normalize([0.5]*3, [0.5]*3),
         ])
-        # 构建 DataLoader
+
         train_dir = os.path.join(data_dir, "train")
+        val_images_dir = os.path.join(data_dir, "val", "images")
+
         train_ds = datasets.ImageFolder(train_dir, transform=tf_train)
-        val_ds   = datasets.ImageFolder(images_dir, transform=tf_val)
+        val_ds   = datasets.ImageFolder(val_images_dir, transform=tf_val)
         self.train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
         self.val_loader   = DataLoader(val_ds,   batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+    def prepare_dataset(self, data_dir):
+        parent = os.path.dirname(data_dir)
+        if not os.path.isdir(os.path.join(data_dir, "train")):
+            print(f"[Info] Downloading and extracting Tiny ImageNet to {data_dir}")
+            os.makedirs(parent, exist_ok=True)
+            zip_path = os.path.join(parent, "tiny-imagenet-200.zip")
+            os.system(f"wget -q http://cs231n.stanford.edu/tiny-imagenet-200.zip -O {zip_path}")
+            os.system(f"unzip -q {zip_path} -d {parent}")
+            os.system(f"mv {os.path.join(parent, 'tiny-imagenet-200')} {data_dir}")
+
+        # 重组验证集目录
+        val_dir = os.path.join(data_dir, "val")
+        images_dir = os.path.join(val_dir, "images")
+        if not os.path.isdir(images_dir) or len(os.listdir(images_dir)) == 0:
+            print(f"[Info] Restructuring validation images in {val_dir}")
+            os.makedirs(images_dir, exist_ok=True)
+            ann = os.path.join(val_dir, "val_annotations.txt")
+            os.system(f"cd {val_dir} && awk '{{print $2}}' val_annotations.txt | sort -u | xargs -I{{}} mkdir -p images/{{}}")
+            os.system(f"cd {val_dir} && awk '{{print $1 \"\t\" $2}}' val_annotations.txt | while IFS=\"\t\" read img cls; do mv images/$img images/$cls/; done")
 
 # Training and evaluation
 
