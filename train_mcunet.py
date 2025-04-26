@@ -140,7 +140,7 @@ def main():
     parser.add_argument("--lr_finetune", type=float, default=0.05, help="Learning rate for full fine-tune phase")
     parser.add_argument("--momentum", type=float, default=0.9)
     parser.add_argument("--weight_decay", type=float, default=1e-4)
-    parser.add_argument("--num_workers", type=int, default=4)
+    parser.add_argument("--num_workers", type=int, default=16)
     parser.add_argument("--log_root", type=str, default="logs", help="Root directory for logs/checkpoints")
     args, unknown = parser.parse_known_args()  # ignore unknown args from Jupyter
 
