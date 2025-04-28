@@ -1,0 +1,15 @@
+Average Inference Time: 64.51 ms
+Top1 Test Accuracy: 93.20%
+========================================
+Total params: 1414850
+Trainable params: 1414850
+Non-trainable params: 0
+========================================
+Input size (MB): 0.29
+Forward/backward pass size (MB): 5.98
+Params size (MB): 5.40
+Estimated Total Size (MB): 11.67
+========================================
+Single image FLOPs: 136.761M
+Model Parameters: 1.415M
+========================================
