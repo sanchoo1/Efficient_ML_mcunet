@@ -150,7 +150,7 @@ def load_pretrained_model(model_name: str, weight_path: str, num_classes=10, dev
     return model
 
 if MODEL_NAME == 'hard':
-    model = torch.load("hardpruned_.pth")
+    model = torch.load("hardpruned_.pth", map_location=DEVICE, weights_only=False)
     model.eval()
     SAVE_PATH = 'hard_evaluation.txt'
 else:
