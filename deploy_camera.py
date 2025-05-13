@@ -68,7 +68,9 @@ while True:
         break
 
     ret, frame = cap.read()
-    if not ret: break
+    if not ret: 
+        print("camera failed")
+        break
     img = cv2.resize(frame, INPUT_SIZE)
     tensor = (torch.from_numpy(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
               .permute(2,0,1).unsqueeze(0).float().to(DEVICE) / 255.0)
@@ -100,11 +102,13 @@ cap.release()
 cv2.destroyAllWindows()
 
 # ─── Compute & dump summary ────────────────────────────────────────────────────
-avg_inf = sum(infer_times) / len(infer_times)
+if len(infer_times) > 0:
+    avg_inf = sum(infer_times) / len(infer_times)
 min_inf = min(infer_times)
 max_inf = max(infer_times)
 
-avg_fps = sum(fps_list) / len(fps_list)
+if len(fps_list) > 0:
+    avg_fps = sum(fps_list) / len(fps_list)
 min_fps = min(fps_list)
 max_fps = max(fps_list)
 
