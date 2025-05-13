@@ -11,7 +11,7 @@ from tqdm import tqdm
 from mcunet.model_zoo import build_model
 
 # ------------------ 配置部分 ------------------
-MODEL_NAME = 'mcunet-in4'
+MODEL_NAME = 'hard'
 MODEL_PATH   = 'content/mcunet-in4_2_cifar10.pth'
 
 base = os.path.splitext(os.path.basename(MODEL_PATH))[0]
@@ -97,8 +97,14 @@ def evaluate_with_inftime(model: nn.Module, test_dataloader: DataLoader, device=
     total = 0
     inference_times = []
 
+    num_batches = len(test_dataloader)
+    half_batches = num_batches // 2
+
     with torch.no_grad():
-        for inputs, targets in tqdm(test_dataloader, desc="Evaluating", leave=False):
+        for i, (inputs, targets) in enumerate(tqdm(test_dataloader, desc="Evaluating", leave=False)):
+            if i >= half_batches:
+                break
+
             inputs, targets = inputs.to(device), targets.to(device)
 
             # Start timing
